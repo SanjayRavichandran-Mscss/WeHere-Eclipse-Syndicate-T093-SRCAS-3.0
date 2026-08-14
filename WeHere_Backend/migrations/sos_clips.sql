@@ -1,0 +1,11 @@
+CREATE TABLE IF NOT EXISTS sos_clips (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NOT NULL,
+  username VARCHAR(100),
+  cid VARCHAR(150) NOT NULL,
+  gateway_url VARCHAR(500) NOT NULL,
+  latitude DECIMAL(10, 6),
+  longitude DECIMAL(10, 6),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id)
+);

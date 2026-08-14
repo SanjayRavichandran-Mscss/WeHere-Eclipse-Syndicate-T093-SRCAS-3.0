@@ -1,0 +1,49 @@
+{
+  "expo": {
+    "name": "WeHere",
+    "slug": "WeHere",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "weherefrontend",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.sanjayr2025.weHere"
+    },
+    "android": {
+      "softwareKeyboardLayoutMode": "resize",
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION",
+        "FOREGROUND_SERVICE",
+        "READ_CONTACTS"
+      ],
+      "package": "com.sanjayr2025.weHere",
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyB9aVlkyaMQRS4RMvBCcXGsccIFWR9Ukw4"
+        }
+      }
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/images/splash-icon.png",
+          "backgroundColor": "#ffffff"
+        }
+      ],
+      "expo-font",
+      "expo-web-browser",
+      "expo-sqlite"
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "c00f58b1-5f9f-42cf-9ac5-2ab94b895f40"
+      }
+    }
+  }
+}

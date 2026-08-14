@@ -1,0 +1,1116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>📊 SQLite Database Viewer — WeHere Offline Demo</title>
+
+    <style>
+        /* ======================= GLOBAL ======================= */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #f0f4f8;
+            padding: 24px;
+            color: #1a202c;
+        }
+
+        .container {
+            max-width: 1360px;
+            margin: 0 auto;
+        }
+
+        /* ======================= HEADER ======================= */
+        .header {
+            background: linear-gradient(135deg, #1b5e20 0%, #2e7d32 100%);
+            color: #fff;
+            padding: 28px 36px;
+            border-radius: 20px;
+            margin-bottom: 28px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            box-shadow: 0 8px 32px rgba(27, 94, 32, 0.25);
+        }
+
+        .header-left h1 {
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: -0.4px;
+        }
+
+        .header-left h1 span {
+            font-weight: 300;
+            opacity: 0.85;
+        }
+
+        .header-left p {
+            font-size: 15px;
+            opacity: 0.88;
+            margin-top: 4px;
+            font-weight: 400;
+        }
+
+        .header-badge {
+            background: rgba(255, 255, 255, 0.18);
+            padding: 8px 18px;
+            border-radius: 40px;
+            font-size: 13px;
+            font-weight: 500;
+            letter-spacing: 0.3px;
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(255, 255, 255, 0.10);
+        }
+
+        .header-badge strong {
+            font-weight: 700;
+        }
+
+        /* ======================= STATUS BAR ======================= */
+        .status-bar {
+            background: #ffffff;
+            padding: 14px 24px;
+            border-radius: 16px;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+            border: 1px solid #edf2f7;
+        }
+
+        .status-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            transition: all 0.3s ease;
+            flex-shrink: 0;
+        }
+
+        .status-dot.online {
+            background: #22c55e;
+            box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.15);
+        }
+
+        .status-dot.offline {
+            background: #ef4444;
+            box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.15);
+        }
+
+        .status-dot.loading {
+            background: #f59e0b;
+            box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.15);
+            animation: pulse-dot 1.2s infinite;
+        }
+
+        @keyframes pulse-dot {
+            0%,
+            100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.25);
+            }
+        }
+
+        .status-text {
+            font-size: 15px;
+            font-weight: 600;
+        }
+
+        .status-text.online {
+            color: #16a34a;
+        }
+
+        .status-text.offline {
+            color: #dc2626;
+        }
+
+        .status-text.loading {
+            color: #d97706;
+        }
+
+        .status-divider {
+            width: 1px;
+            height: 28px;
+            background: #e2e8f0;
+        }
+
+        .status-meta {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-left: auto;
+            font-size: 13px;
+            color: #64748b;
+            flex-wrap: wrap;
+        }
+
+        .status-meta-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .status-meta-item .icon {
+            font-size: 16px;
+        }
+
+        .status-meta-item strong {
+            color: #1a202c;
+            font-weight: 600;
+        }
+
+        /* ======================= STATS GRID ======================= */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: #ffffff;
+            padding: 20px 24px;
+            border-radius: 16px;
+            text-align: center;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+            border: 1px solid #edf2f7;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+        }
+
+        .stat-card.total::before {
+            background: #3b82f6;
+        }
+        .stat-card.active::before {
+            background: #22c55e;
+        }
+        .stat-card.deleted::before {
+            background: #ef4444;
+        }
+        .stat-card.pending::before {
+            background: #f59e0b;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+        }
+
+        .stat-number {
+            font-size: 34px;
+            font-weight: 800;
+            line-height: 1.2;
+            letter-spacing: -0.5px;
+        }
+
+        .stat-number.total-color {
+            color: #2563eb;
+        }
+        .stat-number.active-color {
+            color: #16a34a;
+        }
+        .stat-number.deleted-color {
+            color: #dc2626;
+        }
+        .stat-number.pending-color {
+            color: #d97706;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            font-weight: 500;
+            color: #64748b;
+            margin-top: 4px;
+        }
+
+        .stat-sub {
+            font-size: 12px;
+            color: #94a3b8;
+            margin-top: 2px;
+        }
+
+        /* ======================= DEMO NOTE ======================= */
+        .demo-note {
+            background: #fffbeb;
+            padding: 16px 24px;
+            border-radius: 16px;
+            margin-bottom: 24px;
+            border-left: 5px solid #f59e0b;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+            border: 1px solid #fde68a;
+        }
+
+        .demo-note .icon {
+            font-size: 28px;
+        }
+
+        .demo-note-content {
+            flex: 1;
+        }
+
+        .demo-note-content strong {
+            color: #92400e;
+            font-weight: 700;
+        }
+
+        .demo-note-content span {
+            color: #78350f;
+        }
+
+        .demo-note-content .step {
+            display: inline-block;
+            background: #fde68a;
+            padding: 0 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 700;
+            color: #78350f;
+            margin: 0 2px;
+        }
+
+        /* ======================= CONTROLS ======================= */
+        .controls {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 10px 22px;
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn:active {
+            transform: scale(0.96);
+        }
+
+        .btn-primary {
+            background: #1b5e20;
+            color: #fff;
+        }
+
+        .btn-primary:hover {
+            background: #2e7d32;
+            box-shadow: 0 4px 16px rgba(27, 94, 32, 0.30);
+        }
+
+        .btn-secondary {
+            background: #f1f5f9;
+            color: #334155;
+        }
+
+        .btn-secondary:hover {
+            background: #e2e8f0;
+        }
+
+        .btn-danger {
+            background: #fef2f2;
+            color: #dc2626;
+        }
+
+        .btn-danger:hover {
+            background: #fee2e2;
+        }
+
+        .btn-success {
+            background: #f0fdf4;
+            color: #16a34a;
+        }
+
+        .btn-success:hover {
+            background: #dcfce7;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* ======================= TABLE ======================= */
+        .table-container {
+            background: #ffffff;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+            border: 1px solid #edf2f7;
+        }
+
+        .table-scroll {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        thead {
+            background: #f8fafc;
+        }
+
+        th {
+            padding: 14px 18px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            color: #64748b;
+            border-bottom: 2px solid #e2e8f0;
+            white-space: nowrap;
+        }
+
+        td {
+            padding: 14px 18px;
+            border-bottom: 1px solid #f1f5f9;
+            vertical-align: middle;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:hover td {
+            background: #fafcff;
+        }
+
+        .col-id {
+            font-weight: 700;
+            color: #1a202c;
+            font-size: 13px;
+        }
+
+        .col-user {
+            color: #64748b;
+            font-size: 13px;
+        }
+
+        .col-name {
+            font-weight: 600;
+            color: #1a202c;
+        }
+
+        .col-phone {
+            font-family: 'SF Mono', 'Menlo', monospace;
+            font-size: 13px;
+            color: #334155;
+        }
+
+        .col-status .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 14px;
+            border-radius: 40px;
+            font-size: 12px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .badge-active {
+            background: #dcfce7;
+            color: #16a34a;
+        }
+
+        .badge-deleted {
+            background: #fef2f2;
+            color: #dc2626;
+        }
+
+        .col-created {
+            font-size: 12px;
+            color: #94a3b8;
+            white-space: nowrap;
+        }
+
+        /* ======================= EMPTY STATE ======================= */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #94a3b8;
+        }
+
+        .empty-state .icon {
+            font-size: 56px;
+            margin-bottom: 12px;
+        }
+
+        .empty-state .title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #64748b;
+        }
+
+        .empty-state .sub {
+            font-size: 14px;
+            margin-top: 4px;
+        }
+
+        /* ======================= FOOTER ======================= */
+        .footer {
+            margin-top: 24px;
+            padding: 16px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            border-top: 1px solid #e2e8f0;
+            font-size: 13px;
+            color: #94a3b8;
+        }
+
+        .footer-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .footer-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .footer-badge {
+            background: #f1f5f9;
+            padding: 4px 14px;
+            border-radius: 40px;
+            font-size: 11px;
+            font-weight: 600;
+            color: #64748b;
+        }
+
+        /* ======================= RESPONSIVE ======================= */
+        @media (max-width: 1024px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 12px;
+            }
+
+            .header {
+                padding: 20px;
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+            }
+
+            .header-left h1 {
+                font-size: 22px;
+            }
+
+            .status-bar {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+
+            .status-meta {
+                margin-left: 0;
+                width: 100%;
+                justify-content: flex-start;
+                padding-top: 8px;
+                border-top: 1px solid #e2e8f0;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 12px;
+            }
+
+            .stat-card {
+                padding: 16px;
+            }
+
+            .stat-number {
+                font-size: 28px;
+            }
+
+            .demo-note {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .controls {
+                gap: 8px;
+            }
+
+            .btn {
+                padding: 8px 16px;
+                font-size: 13px;
+            }
+
+            th,
+            td {
+                padding: 10px 12px;
+                font-size: 13px;
+            }
+
+            .footer {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .header-left h1 {
+                font-size: 19px;
+            }
+
+            .header-badge {
+                font-size: 11px;
+                padding: 4px 14px;
+            }
+
+            .status-meta {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 4px;
+            }
+
+            .status-divider {
+                display: none;
+            }
+        }
+
+        /* ======================= SCROLLBAR ======================= */
+        .table-scroll::-webkit-scrollbar {
+            height: 6px;
+        }
+
+        .table-scroll::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 8px;
+        }
+
+        .table-scroll::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 8px;
+        }
+
+        .table-scroll::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="app">
+
+        <!-- ========================================================= -->
+        <!-- HEADER                                                    -->
+        <!-- ========================================================= -->
+        <header class="header">
+            <div class="header-left">
+                <h1>📊 SQLite <span>Database Viewer</span></h1>
+                <p>Live view of mobile app's offline SQLite database &bull; Auto-refresh every 5s</p>
+            </div>
+            <div class="header-badge">
+                <strong>🚀 Offline‑First</strong> &nbsp;·&nbsp; WeHere Demo
+            </div>
+        </header>
+
+        <!-- ========================================================= -->
+        <!-- STATUS BAR                                                -->
+        <!-- ========================================================= -->
+        <div class="status-bar" id="statusBar">
+            <div class="status-left">
+                <span class="status-dot loading" id="statusDot"></span>
+                <span class="status-text loading" id="statusText">Connecting…</span>
+            </div>
+
+            <div class="status-divider"></div>
+
+            <div class="status-meta">
+                <span class="status-meta-item">
+                    <span class="icon">🔄</span>
+                    <span>Last updated: <strong id="lastUpdate">—</strong></span>
+                </span>
+                <span class="status-meta-item">
+                    <span class="icon">📡</span>
+                    <span>API: <strong id="apiStatus">—</strong></span>
+                </span>
+                <span class="status-meta-item">
+                    <span class="icon">📦</span>
+                    <span>Total: <strong id="totalMeta">0</strong></span>
+                </span>
+            </div>
+        </div>
+
+        <!-- ========================================================= -->
+        <!-- STATS CARDS                                               -->
+        <!-- ========================================================= -->
+        <div class="stats-grid" id="statsGrid">
+            <div class="stat-card total">
+                <div class="stat-number total-color" id="totalContacts">0</div>
+                <div class="stat-label">📋 Total Contacts</div>
+                <div class="stat-sub">All records in SQLite</div>
+            </div>
+            <div class="stat-card active">
+                <div class="stat-number active-color" id="activeContacts">0</div>
+                <div class="stat-label">✅ Active</div>
+                <div class="stat-sub">Currently available</div>
+            </div>
+            <div class="stat-card deleted">
+                <div class="stat-number deleted-color" id="deletedContacts">0</div>
+                <div class="stat-label">🗑️ Soft‑Deleted</div>
+                <div class="stat-sub">Marked for sync cleanup</div>
+            </div>
+            <div class="stat-card pending">
+                <div class="stat-number pending-color" id="pendingContacts">0</div>
+                <div class="stat-label">⏳ Pending Sync</div>
+                <div class="stat-sub">Awaiting server confirmation</div>
+            </div>
+        </div>
+
+        <!-- ========================================================= -->
+        <!-- DEMO NOTE                                                 -->
+        <!-- ========================================================= -->
+        <div class="demo-note">
+            <span class="icon">💡</span>
+            <div class="demo-note-content">
+                <strong>Live Demo — Offline‑First Sync</strong>
+                <span>
+                    · Turn on <strong>Airplane Mode</strong> on your phone
+                    <span class="step">1</span> → Add a contact
+                    <span class="step">2</span> → It appears here <strong>immediately</strong> from SQLite
+                    <span class="step">3</span> → Turn off Airplane Mode
+                    <span class="step">4</span> → Watch it sync to the server automatically
+                    <span class="step">5</span>
+                </span>
+            </div>
+        </div>
+
+        <!-- ========================================================= -->
+        <!-- CONTROLS                                                  -->
+        <!-- ========================================================= -->
+        <div class="controls">
+            <button class="btn btn-primary" onclick="refreshData()" id="refreshBtn">
+                🔄 Refresh Now
+            </button>
+            <button class="btn btn-secondary" onclick="exportData()">
+                📤 Export JSON
+            </button>
+            <button class="btn btn-success" onclick="copyData()">
+                📋 Copy as JSON
+            </button>
+            <button class="btn btn-danger" onclick="clearCache()">
+                🗑️ Clear Cache
+            </button>
+        </div>
+
+        <!-- ========================================================= -->
+        <!-- TABLE                                                     -->
+        <!-- ========================================================= -->
+        <div class="table-container">
+            <div class="table-scroll">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>ID</th>
+                            <th>User</th>
+                            <th>Contact Name</th>
+                            <th>Phone Number</th>
+                            <th>Status</th>
+                            <th>Created At</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        <tr>
+                            <td colspan="7" style="text-align:center;padding:40px;color:#94a3b8;">
+                                <span style="font-size:32px;display:block;margin-bottom:8px;">⏳</span>
+                                Loading data from SQLite…
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ========================================================= -->
+        <!-- FOOTER                                                    -->
+        <!-- ========================================================= -->
+        <div class="footer">
+            <div class="footer-left">
+                <span>📊 WeHere Offline Demo</span>
+                <span class="footer-badge">SQLite</span>
+                <span class="footer-badge">Expo Go</span>
+            </div>
+            <div class="footer-right">
+                <span id="footerTimer">⏱️ Auto‑refresh: 5s</span>
+                <span>·</span>
+                <span id="footerCount">0 records</span>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // =============================================================
+        // CONFIG
+        // =============================================================
+        const API_URL = 'http://localhost:5000/api/offline/contacts/1';
+        const REFRESH_INTERVAL = 5000; // 5 seconds
+
+        let contacts = [];
+        let isOnline = false;
+        let lastUpdateTime = null;
+
+        // =============================================================
+        // DOM REFS
+        // =============================================================
+        const $ = (id) => document.getElementById(id);
+        const $$ = (sel) => document.querySelectorAll(sel);
+
+        const statusDot = $('statusDot');
+        const statusText = $('statusText');
+        const lastUpdate = $('lastUpdate');
+        const apiStatus = $('apiStatus');
+        const totalMeta = $('totalMeta');
+
+        const totalContacts = $('totalContacts');
+        const activeContacts = $('activeContacts');
+        const deletedContacts = $('deletedContacts');
+        const pendingContacts = $('pendingContacts');
+
+        const tableBody = $('tableBody');
+        const refreshBtn = $('refreshBtn');
+        const footerCount = $('footerCount');
+
+        // =============================================================
+        // FETCH DATA
+        // =============================================================
+        async function fetchContacts() {
+            try {
+                setStatus('loading', '🔄 Fetching data…');
+
+                const response = await fetch(API_URL);
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status} — ${response.statusText}`);
+                }
+
+                const data = await response.json();
+
+                if (data.success) {
+                    contacts = data.data || [];
+                    lastUpdateTime = new Date();
+                    isOnline = true;
+
+                    renderTable();
+                    renderStats();
+                    renderMeta();
+                    setStatus('online', '✅ Online — Connected to server');
+
+                    return true;
+                } else {
+                    throw new Error(data.message || 'Unknown error');
+                }
+
+            } catch (error) {
+                console.error('[SQLite Viewer] Error:', error);
+                isOnline = false;
+                setStatus('offline', '🔴 Offline — Cannot reach server');
+
+                // Show error in table
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="7" style="text-align:center;padding:40px;color:#dc2626;">
+                            <div style="font-size:42px;margin-bottom:8px;">⚠️</div>
+                            <div style="font-weight:600;font-size:16px;">Connection Error</div>
+                            <div style="font-size:14px;color:#94a3b8;margin-top:4px;">
+                                ${error.message}
+                            </div>
+                            <div style="font-size:13px;color:#94a3b8;margin-top:8px;">
+                                💡 Make sure the backend is running:<br>
+                                <code style="background:#f1f5f9;padding:2px 10px;border-radius:6px;display:inline-block;margin-top:4px;">
+                                    cd WeHere_Backend && npm start
+                                </code>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+
+                // Update stats to show 0
+                contacts = [];
+                renderStats();
+                renderMeta();
+
+                return false;
+            }
+        }
+
+        // =============================================================
+        // RENDER TABLE
+        // =============================================================
+        function renderTable() {
+            if (!contacts || contacts.length === 0) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="7" style="text-align:center;padding:50px 20px;color:#94a3b8;">
+                            <div style="font-size:48px;margin-bottom:8px;">📭</div>
+                            <div style="font-size:17px;font-weight:500;color:#64748b;">No contacts in SQLite</div>
+                            <div style="font-size:14px;margin-top:4px;">
+                                Add emergency contacts from your mobile app
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            let html = '';
+            contacts.forEach((c, i) => {
+                const isActive = c.status === 1;
+                const badgeClass = isActive ? 'badge-active' : 'badge-deleted';
+                const badgeIcon = isActive ? '✅' : '🗑️';
+                const badgeLabel = isActive ? 'Active' : 'Deleted';
+
+                html += `
+                    <tr>
+                        <td style="color:#94a3b8;font-weight:600;font-size:13px;">${i + 1}</td>
+                        <td class="col-id">${c.id}</td>
+                        <td class="col-user">${c.user_id}</td>
+                        <td class="col-name">${escapeHtml(c.contact_name)}</td>
+                        <td class="col-phone">${c.country_code || '+91'} ${c.contact_number}</td>
+                        <td class="col-status">
+                            <span class="badge ${badgeClass}">
+                                ${badgeIcon} ${badgeLabel}
+                            </span>
+                        </td>
+                        <td class="col-created">${formatDate(c.created_at)}</td>
+                    </tr>
+                `;
+            });
+
+            tableBody.innerHTML = html;
+        }
+
+        // =============================================================
+        // RENDER STATS
+        // =============================================================
+        function renderStats() {
+            const total = contacts?.length || 0;
+            const active = contacts?.filter(c => c.status === 1).length || 0;
+            const deleted = contacts?.filter(c => c.status === 0).length || 0;
+            const pending = contacts?.filter(c => c.sync_status === 'pending').length || 0;
+
+            totalContacts.textContent = total;
+            activeContacts.textContent = active;
+            deletedContacts.textContent = deleted;
+            pendingContacts.textContent = pending;
+
+            footerCount.textContent = `${total} records`;
+        }
+
+        // =============================================================
+        // RENDER META
+        // =============================================================
+        function renderMeta() {
+            totalMeta.textContent = contacts?.length || 0;
+
+            if (lastUpdateTime) {
+                lastUpdate.textContent = lastUpdateTime.toLocaleTimeString();
+            }
+
+            apiStatus.textContent = isOnline ? '🟢 Online' : '🔴 Offline';
+        }
+
+        // =============================================================
+        // SET STATUS
+        // =============================================================
+        function setStatus(state, text) {
+            const states = {
+                online: { dot: 'online', textClass: 'online' },
+                offline: { dot: 'offline', textClass: 'offline' },
+                loading: { dot: 'loading', textClass: 'loading' },
+            };
+
+            const s = states[state] || states.loading;
+            statusDot.className = `status-dot ${s.dot}`;
+            statusText.className = `status-text ${s.textClass}`;
+            statusText.textContent = text;
+
+            // Update API status
+            if (state === 'online') {
+                apiStatus.textContent = '🟢 Online';
+            } else if (state === 'offline') {
+                apiStatus.textContent = '🔴 Offline';
+            } else {
+                apiStatus.textContent = '⏳ Connecting…';
+            }
+        }
+
+        // =============================================================
+        // REFRESH
+        // =============================================================
+        async function refreshData() {
+            refreshBtn.disabled = true;
+            refreshBtn.textContent = '⏳ Refreshing…';
+
+            await fetchContacts();
+
+            refreshBtn.textContent = '🔄 Refresh Now';
+            refreshBtn.disabled = false;
+        }
+
+        // =============================================================
+        // EXPORT
+        // =============================================================
+        function exportData() {
+            if (!contacts || contacts.length === 0) {
+                alert('📭 No data to export.');
+                return;
+            }
+
+            const payload = {
+                exported_at: new Date().toISOString(),
+                total: contacts.length,
+                active: contacts.filter(c => c.status === 1).length,
+                deleted: contacts.filter(c => c.status === 0).length,
+                contacts: contacts,
+            };
+
+            const json = JSON.stringify(payload, null, 2);
+            const blob = new Blob([json], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `sqlite_export_${Date.now()}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // =============================================================
+        // COPY
+        // =============================================================
+        function copyData() {
+            if (!contacts || contacts.length === 0) {
+                alert('📭 No data to copy.');
+                return;
+            }
+
+            const json = JSON.stringify(contacts, null, 2);
+            navigator.clipboard.writeText(json).then(() => {
+                alert('✅ Copied to clipboard!');
+            }).catch(() => {
+                // Fallback
+                const textarea = document.createElement('textarea');
+                textarea.value = json;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                alert('✅ Copied to clipboard!');
+            });
+        }
+
+        // =============================================================
+        // CLEAR CACHE
+        // =============================================================
+        function clearCache() {
+            if (confirm('🗑️ Clear cached data? This will refresh the view.')) {
+                localStorage.clear();
+                refreshData();
+            }
+        }
+
+        // =============================================================
+        // UTILITIES
+        // =============================================================
+        function escapeHtml(text) {
+            if (!text) return '—';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function formatDate(dateStr) {
+            if (!dateStr) return '—';
+            try {
+                const d = new Date(dateStr);
+                return d.toLocaleString();
+            } catch (_) {
+                return dateStr;
+            }
+        }
+
+        // =============================================================
+        // INIT
+        // =============================================================
+        fetchContacts();
+
+        // Auto‑refresh
+        setInterval(() => {
+            fetchContacts();
+        }, REFRESH_INTERVAL);
+
+        // Show timer in footer
+        setInterval(() => {
+            const el = document.getElementById('footerTimer');
+            if (el) {
+                const now = new Date();
+                el.textContent = `⏱️ Auto‑refresh: ${REFRESH_INTERVAL / 1000}s · ${now.toLocaleTimeString()}`;
+            }
+        }, 1000);
+
+        console.log('📊 SQLite Viewer initialized');
+        console.log(`🔄 Auto-refresh every ${REFRESH_INTERVAL / 1000} seconds`);
+        console.log(`📍 API: ${API_URL}`);
+    </script>
+</body>
+</html>
