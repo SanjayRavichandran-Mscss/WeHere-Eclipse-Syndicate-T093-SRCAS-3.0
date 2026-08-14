@@ -2,7 +2,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, FlatList, ActivityIndicator, Alert } from 'react-native';
 import { Ionicons, AntDesign } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const API_BASE = 'http://192.168.137.1:5000/api';
@@ -16,7 +15,6 @@ interface ConnectionRequest {
 }
 
 export default function GeneralNotifications() {
-  const router = useRouter();
   const [requests, setRequests] = useState<ConnectionRequest[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -48,11 +46,9 @@ export default function GeneralNotifications() {
         setLoading(false);
         return;
       }
-      // Get pending and recently resolved (optional: include all? we'll filter pending only for now)
       const response = await fetch(`${API_BASE}/notifications/connection-requests/${userId}`);
       const data = await response.json();
       if (data.success) {
-        // Mark all as pending initially
         const withStatus = data.data.map((req: any) => ({ ...req, status: 'pending' as const }));
         setRequests(withStatus);
       } else {
@@ -73,7 +69,6 @@ export default function GeneralNotifications() {
         Alert.alert('Error', 'User not found');
         return;
       }
-      // Use the notification endpoint
       const response = await fetch(`${API_BASE}/notifications/respond`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -82,7 +77,6 @@ export default function GeneralNotifications() {
       const data = await response.json();
       if (data.success) {
         Alert.alert('Success', `Request ${action}ed`);
-        // Update the status locally instead of removing
         setRequests(prev =>
           prev.map(req =>
             req.network_id === networkId
@@ -106,13 +100,6 @@ export default function GeneralNotifications() {
   if (loading) {
     return (
       <View style={styles.container}>
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-            <Ionicons name="arrow-back" size={24} color="#0F172A" />
-          </TouchableOpacity>
-          <AntDesign name="notification" size={20} color="#333" />
-          <Text style={styles.title}>General</Text>
-        </View>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#14532D" />
         </View>
@@ -122,14 +109,6 @@ export default function GeneralNotifications() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Ionicons name="arrow-back" size={24} color="#0F172A" />
-        </TouchableOpacity>
-        <AntDesign name="notification" size={20} color="#333" />
-        <Text style={styles.title}>General</Text>
-      </View>
-
       <FlatList
         data={requests}
         keyExtractor={(item) => item.network_id.toString()}
@@ -193,19 +172,6 @@ export default function GeneralNotifications() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F8FAFC' },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingTop: 56,
-    paddingBottom: 12,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
-    gap: 8,
-  },
-  backBtn: { padding: 4 },
-  title: { fontSize: 20, fontWeight: '800', color: '#0F172A', marginLeft: 4 },
   list: { padding: 12 },
   emptyWrap: { flexGrow: 1 },
   empty: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32 },

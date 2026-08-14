@@ -34,7 +34,11 @@ interface NotificationItem {
   priority: string;
 }
 
-export default function AmbulanceNotifications() {
+interface AmbulanceNotificationsProps {
+  onPendingCountChange?: (count: number) => void;
+}
+
+export default function AmbulanceNotifications({ onPendingCountChange }: AmbulanceNotificationsProps) {
   const router = useRouter();
   const [userId, setUserId] = useState<number | null>(null);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
@@ -81,6 +85,14 @@ export default function AmbulanceNotifications() {
     return () => clearInterval(interval);
   }, [userId, fetchNotifications]);
 
+  // Notify parent about pending count
+  useEffect(() => {
+    if (onPendingCountChange) {
+      const pending = notifications.filter((n) => n.my_received_status !== 1).length;
+      onPendingCountChange(pending);
+    }
+  }, [notifications, onPendingCountChange]);
+
   const markAsReceived = async (alertId: number) => {
     if (!userId) return;
     try {
@@ -122,8 +134,6 @@ export default function AmbulanceNotifications() {
       return '';
     }
   };
-
-  const pendingCount = notifications.filter((n) => n.my_received_status !== 1).length;
 
   const renderItem = ({ item }: { item: NotificationItem }) => {
     const isReceived = item.my_received_status === 1;
@@ -181,19 +191,6 @@ export default function AmbulanceNotifications() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Ionicons name="arrow-back" size={24} color="#0F172A" />
-        </TouchableOpacity>
-        <Ambulance size={22} color="#dc2626" />
-        <Text style={styles.title}>Ambulance</Text>
-        {pendingCount > 0 && (
-          <View style={styles.countBadge}>
-            <Text style={styles.countText}>{pendingCount}</Text>
-          </View>
-        )}
-      </View>
-
       {loading ? (
         <View style={styles.center}>
           <ActivityIndicator size="large" color="#dc2626" />
@@ -233,29 +230,6 @@ export default function AmbulanceNotifications() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F8FAFC' },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingTop: 56,
-    paddingBottom: 12,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
-    gap: 8,
-  },
-  backBtn: { padding: 4 },
-  title: { fontSize: 20, fontWeight: '800', color: '#0F172A', marginLeft: 4, flex: 1 },
-  countBadge: {
-    backgroundColor: '#dc2626',
-    minWidth: 22,
-    height: 22,
-    borderRadius: 11,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 6,
-  },
-  countText: { color: '#fff', fontSize: 11, fontWeight: '700' },
   list: { padding: 12, paddingBottom: 24 },
   emptyWrap: { flexGrow: 1 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
