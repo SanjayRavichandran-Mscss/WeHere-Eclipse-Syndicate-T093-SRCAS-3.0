@@ -592,37 +592,117 @@ const loadResources = useCallback(async (lat: number, lng: number) => {
 
         {/* MAP */}
         <View style={styles.mapBox}>
-          <MapView
-            ref={mapRef}
-            provider={PROVIDER_GOOGLE}
-            style={StyleSheet.absoluteFill}
-            showsUserLocation
-            showsMyLocationButton={false}
-            initialRegion={{
-              latitude: userLocation?.latitude ?? 11.06,
-              longitude: userLocation?.longitude ?? 76.91,
-              latitudeDelta: 0.06,
-              longitudeDelta: 0.06,
-            }}
-          >
-            {mapResources.map((item) => (
-              <Marker
-                key={item.id}
-                coordinate={{ latitude: item.latitude, longitude: item.longitude }}
-                onPress={() => handlePress(item)}
-                tracksViewChanges={false}
-              >
-                <CustomMarker type={item.type} color={getMarkerColor(item.type)} />
-                <Callout tooltip>
-                  <View style={styles.callout}>
-                    <Text style={styles.calloutName} numberOfLines={1}>{item.name}</Text>
-                    <Text style={styles.calloutDist}>{item.distance}</Text>
-                    <Text style={styles.calloutType}>{item.type}</Text>
-                  </View>
-                </Callout>
-              </Marker>
-            ))}
-          </MapView>
+         <MapView
+  ref={mapRef}
+  provider={PROVIDER_GOOGLE}
+  style={StyleSheet.absoluteFill}
+  showsUserLocation
+  showsMyLocationButton={false}
+  initialRegion={{
+    latitude: userLocation?.latitude ?? 11.06,
+    longitude: userLocation?.longitude ?? 76.91,
+    latitudeDelta: 0.06,
+    longitudeDelta: 0.06,
+  }}
+>
+  {/* Current user – navy */}
+  {userLocation && (
+    <Marker
+      coordinate={{
+        latitude: userLocation.latitude,
+        longitude: userLocation.longitude,
+      }}
+      pinColor="navy"
+      title="You"
+    >
+      <Callout tooltip>
+        <View style={styles.callout}>
+          <Text style={styles.calloutName}>You</Text>
+          <Text style={styles.calloutType}>Current User</Text>
+        </View>
+      </Callout>
+    </Marker>
+  )}
+
+  {/* Users + Resources */}
+  {mapResources.map((item) => {
+    const isUser = item.type === 'User' || item.type === 'Volunteer';
+
+    let pinColor = 'green';
+    if (isUser) {
+      pinColor = 'darkred';
+    } else {
+      switch (item.type) {
+        case 'Hospital':
+        case 'PHC':
+          pinColor = 'blue';
+          break;
+        case 'Clinic':
+          pinColor = 'cyan';
+          break;
+        case 'Pharmacy':
+          pinColor = 'purple';
+          break;
+        case 'Ambulance':
+          pinColor = 'red';
+          break;
+        case 'Police':
+          pinColor = 'indigo';
+          break;
+        case 'FireStation':
+          pinColor = 'orange';
+          break;
+        case 'Bank':
+          pinColor = 'green';
+          break;
+        case 'ATM':
+          pinColor = 'lime';
+          break;
+        case 'BusStation':
+          pinColor = 'yellow';
+          break;
+        case 'RailwayStation':
+          pinColor = 'brown';
+          break;
+        case 'Airport':
+          pinColor = 'gray';
+          break;
+        case 'PetrolPump':
+          pinColor = 'magenta';
+          break;
+        case 'College':
+          pinColor = 'teal';
+          break;
+        default:
+          pinColor = 'green';
+      }
+    }
+
+    return (
+      <Marker
+        key={item.id}
+        coordinate={{ latitude: item.latitude, longitude: item.longitude }}
+        pinColor={pinColor}
+        title={item.name}
+        onPress={() => handlePress(item)}
+        tracksViewChanges={false}
+      >
+        <Callout tooltip>
+          <View style={styles.callout}>
+            <Text style={styles.calloutName} numberOfLines={1}>
+              {item.name}
+            </Text>
+            {isUser && (
+              <Text style={styles.calloutType}>
+                {item.role || 'User'}
+              </Text>
+            )}
+          </View>
+        </Callout>
+      </Marker>
+    );
+  })}
+</MapView>
 
           <View style={styles.liveBadge}>
             <View style={styles.liveDot} />
@@ -696,13 +776,13 @@ const loadResources = useCallback(async (lat: number, lng: number) => {
                     </View>
                     {selectedResource.phone && (
                       <View style={styles.infoRow}>
-                        <Ionicons name="call-outline" size={18} color="#2563EB" />
-                        <Text style={styles.infoVal}>{selectedResource.phone}</Text>
+                        {/* <Ionicons name="call-outline" size={18} color="#2563EB" /> */}
+                        {/* <Text style={styles.infoVal}>{selectedResource.phone}</Text> */}
                       </View>
                     )}
                     {selectedResource.bloodGroup && (
                       <View style={styles.infoRow}>
-                        <Ionicons name="water-outline" size={18} color="#DC2626" />
+<                        Ionicons name="water-outline" size={18} color="#DC2626" />
                         <Text style={styles.infoVal}>{selectedResource.bloodGroup}</Text>
                       </View>
                     )}
@@ -713,12 +793,7 @@ const loadResources = useCallback(async (lat: number, lng: number) => {
                       <Ionicons name="navigate" size={18} color="#fff" />
                       <Text style={styles.actTxt}>Directions</Text>
                     </TouchableOpacity>
-                    {selectedResource.phone && (
-                      <TouchableOpacity style={[styles.actBtn, { backgroundColor: '#2563EB' }]} onPress={() => callPhone(selectedResource.phone)}>
-                        <Ionicons name="call" size={18} color="#fff" />
-                        <Text style={styles.actTxt}>Call</Text>
-                      </TouchableOpacity>
-                    )}
+                  
                   </View>
                 </View>
               </BottomSheetScrollView>
