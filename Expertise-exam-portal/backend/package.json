@@ -1,0 +1,20 @@
+{
+  "name": "expertise-exam-portal-backend",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Backend for the Expertise Exam Portal. Generates exam questions using a locally running Ollama model (no API keys, nothing leaves your machine).",
+  "scripts": {
+    "dev": "node --watch src/server.js",
+    "start": "node src/server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "nanoid": "^5.0.7",
+    "mysql2": "^3.14.4"
+  }
+}
