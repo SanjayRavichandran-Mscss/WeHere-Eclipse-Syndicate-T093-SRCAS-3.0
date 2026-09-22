@@ -14,7 +14,7 @@ import { Ambulance } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const API_BASE = 'http://192.168.137.1:5000/api/notifications';
+const API_BASE = 'http://10.100.67.248:5000/api/notifications';
 
 interface NotificationItem {
   id: number;

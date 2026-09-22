@@ -26,9 +26,9 @@ const getApiBaseUrl = async (): Promise<string> => {
     if (storedIp) {
       return `http://${storedIp}:5000/api`;
     }
-    return 'http://192.168.137.1:5000/api';
+    return 'http://10.100.67.248:5000/api';
   } catch {
-    return 'http://192.168.137.1:5000/api';
+    return 'http://10.100.67.248:5000/api';
   }
 };
 
@@ -62,7 +62,7 @@ export default function AmbulanceAlert({ userId }: AmbulanceAlertProps) {
   const [activeAlerts, setActiveAlerts] = useState<AlertItem[]>([]);
   const [latestSent, setLatestSent] = useState<SentAlertSummary | null>(null);
   const [showSenderModal, setShowSenderModal] = useState(false);
-  const [apiBaseUrl, setApiBaseUrl] = useState('http://192.168.137.1:5000/api');
+  const [apiBaseUrl, setApiBaseUrl] = useState('http://10.100.67.248:5000/api');
 
   const trackWidth = useRef(0);
   const swipeX = useRef(new Animated.Value(0)).current;

@@ -4,7 +4,7 @@ import { View, Text, StyleSheet, TouchableOpacity, FlatList, ActivityIndicator, 
 import { Ionicons, AntDesign } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const API_BASE = 'http://192.168.137.1:5000/api';
+const API_BASE = 'http://10.100.67.248:5000/api';
 
 interface ConnectionRequest {
   network_id: number;

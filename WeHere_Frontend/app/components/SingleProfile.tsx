@@ -19,12 +19,12 @@ import {
   RefreshControl,
 } from 'react-native';
 import { Ionicons, Feather } from '@expo/vector-icons';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useFocusEffect } from '@react-navigation/native';
+// import { useFocusEffect } from '@react-navigation/native';
 
 const { height } = Dimensions.get('window');
-const API_BASE = 'http://192.168.137.1:5000/api/home'; // base for posts
+const API_BASE = 'http://10.100.67.248:5000/api/home'; // base for posts
 
 interface ProfessionalProfile {
   id: number;
@@ -154,7 +154,7 @@ export default function SingleProfile() {
   const fetchProfileDetails = async () => {
     if (profile) return;
     try {
-      const response = await fetch(`http://192.168.137.1:5000/api/networks/profile/${profileId}`);
+      const response = await fetch(`http://10.100.67.248:5000/api/networks/profile/${profileId}`);
       const data = await response.json();
       if (data.success) {
         setProfile(data.data);
@@ -170,7 +170,7 @@ export default function SingleProfile() {
   const fetchFeedbacks = async () => {
     setLoadingFeedbacks(true);
     try {
-      const response = await fetch(`http://192.168.137.1:5000/api/networks/feedbacks/${profileId}`);
+      const response = await fetch(`http://10.100.67.248:5000/api/networks/feedbacks/${profileId}`);
       const data = await response.json();
       if (data.success) setFeedbacks(data.data || []);
     } catch (error) {
@@ -202,7 +202,7 @@ export default function SingleProfile() {
   // ─── FIXED: Safe stats fetching with fallback ───
   const fetchStats = async () => {
     try {
-      const response = await fetch(`http://192.168.137.1:5000/api/networks/stats/${profileId}`);
+      const response = await fetch(`http://10.100.67.248:5000/api/networks/stats/${profileId}`);
       if (!response.ok) {
         console.warn('Stats API returned non-OK status:', response.status);
         setTotalRequests(0);
@@ -235,7 +235,7 @@ export default function SingleProfile() {
     const uid = await getUserId();
     if (!uid) return;
     try {
-      const response = await fetch(`http://192.168.137.1:5000/api/networks/status/${profileId}`, {
+      const response = await fetch(`http://10.100.67.248:5000/api/networks/status/${profileId}`, {
         headers: { 'user-id': uid },
       });
       const data = await response.json();
@@ -291,7 +291,7 @@ export default function SingleProfile() {
         return;
       }
 
-      const response = await fetch('http://192.168.137.1:5000/api/networks/get-in-touch', {
+      const response = await fetch('http://10.100.67.248:5000/api/networks/get-in-touch', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -343,7 +343,7 @@ export default function SingleProfile() {
 
     setSubmitting(true);
     try {
-      const response = await fetch('http://192.168.137.1:5000/api/networks/feedback', {
+      const response = await fetch('http://10.100.67.248:5000/api/networks/feedback', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

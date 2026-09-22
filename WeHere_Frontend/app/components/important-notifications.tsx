@@ -14,7 +14,7 @@ import {
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const API_BASE_URL = 'http://192.168.137.1:5000/api';
+const API_BASE_URL = 'http://10.100.67.248:5000/api';
 
 /* ── Types ─────────────────────────────────────────────────────────────── */
 interface NearbyUser {

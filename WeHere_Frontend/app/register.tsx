@@ -17,7 +17,7 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
-const API_BASE_URL = ' http://192.168.137.1:5000/api/auth'; // replace with your machine IP for physical device/emulator
+const API_BASE_URL = ' http://10.100.67.248:5000/api/auth'; // replace with your machine IP for physical device/emulator
 
 const COUNTRY_CODES = [
   { name: 'India', code: '+91', flag: '🇮🇳', length: 10 },

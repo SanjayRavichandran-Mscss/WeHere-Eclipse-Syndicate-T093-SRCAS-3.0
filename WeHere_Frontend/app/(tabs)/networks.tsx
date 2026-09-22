@@ -19,16 +19,14 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useFocusEffect } from '@react-navigation/native';
-import { useRouter } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';   // ✅ Both from expo-router
 import Header from '../components/header';
-
 const { width, height } = Dimensions.get('window');
 
 const SIDE_PADDING = 16;
 const CARD_MARGIN = 10;
 const CARD_WIDTH = width - SIDE_PADDING * 2 - 8;
-const API_BASE = 'http://192.168.137.1:5000/api/networks';
+const API_BASE = 'http://10.100.67.248:5000/api/networks';
 
 // ─── Types ──────────────────────────────────────────────────────
 
@@ -196,15 +194,15 @@ export default function NetworksScreen() {
 
   // ─── Handlers ────────────────────────────────────────────────
 
- const handleProfilePress = (profile: ProfessionalProfile) => {
-  router.push({
-    pathname: '../components/SingleProfile',
-    params: {
-      profileId: String(profile.id),
-      profileData: JSON.stringify(profile),
-    },
-  });
-};
+  const handleProfilePress = (profile: ProfessionalProfile) => {
+    router.push({
+      pathname: '../components/SingleProfile',
+      params: {
+        profileId: String(profile.id),
+        profileData: JSON.stringify(profile),
+      },
+    });
+  };
 
   const handleGetInTouch = async (profile: ProfessionalProfile) => {
     try {
@@ -1021,4 +1019,4 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   connectMessageText: { marginLeft: 8, fontSize: 14, color: '#64748B' },
-}); 
+});

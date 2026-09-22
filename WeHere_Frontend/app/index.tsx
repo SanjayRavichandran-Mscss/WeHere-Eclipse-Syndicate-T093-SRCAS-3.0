@@ -19,7 +19,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Location from 'expo-location';
 import FlashMessage, { showMessage } from 'react-native-flash-message';
 
-const API_BASE_URL = 'http://192.168.137.1:5000/api/auth';
+const API_BASE_URL = 'http://10.100.67.248:5000/api/auth';
 
 const COUNTRY_CODES = [
   { name: 'India', code: '+91', flag: '🇮🇳', length: 10 },

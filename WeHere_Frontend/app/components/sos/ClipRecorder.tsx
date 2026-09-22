@@ -12,7 +12,7 @@ import { CameraView, useCameraPermissions, useMicrophonePermissions } from 'expo
 import * as Location from 'expo-location';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const API_BASE_URL = ' http://192.168.137.1:5000/api/sos'; // same host as auth API, different route
+const API_BASE_URL = ' http://10.100.67.248:5000/api/sos'; // same host as auth API, different route
 
 interface ClipRecorderProps {
   visible: boolean;

@@ -10,8 +10,6 @@ import {
   Platform,
   ActivityIndicator,
   LayoutAnimation,
-  Platform as RNPlatform,
-  UIManager,
   Linking,
   Modal,
 } from 'react-native';
@@ -24,11 +22,7 @@ import EmergencyContactsManager from '../components/OfflineComponents/EmergencyC
 import { initializeOfflineDB } from '../../services/offlineSyncService';
 import FlashMessage, { showMessage } from 'react-native-flash-message';
 
-if (RNPlatform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
-  UIManager.setLayoutAnimationEnabledExperimental(true);
-}
-
-const API_BASE_URL = 'http://192.168.137.1:5000/api';
+const API_BASE_URL = 'http://10.100.67.248:5000/api';
 const WORK_OPTIONS = ['Volunteering', 'Freelance', 'Full-time', 'Part-time', 'Consulting'];
 
 /* ═══════════════════════════════════════════════════════════

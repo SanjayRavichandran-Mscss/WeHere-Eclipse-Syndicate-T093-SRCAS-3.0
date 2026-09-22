@@ -26,7 +26,7 @@ const { width: SCREEN_W } = Dimensions.get('window');
 const THUMB_SIZE = 44;
 const TRACK_HEIGHT = 52;
 
-const API_BASE_URL = 'http://192.168.137.1:5000/api';
+const API_BASE_URL = 'http://10.100.67.248:5000/api';
 
 interface MessageBroadcastingProps {
   userId: number;

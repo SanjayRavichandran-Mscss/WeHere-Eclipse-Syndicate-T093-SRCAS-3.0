@@ -31,14 +31,14 @@ import * as DocumentPicker from 'expo-document-picker';
 import * as ImagePicker from 'expo-image-picker';
 import { RichEditor, RichToolbar, actions } from 'react-native-pell-rich-editor';
 import RenderHtml from 'react-native-render-html';
-import { Video, ResizeMode } from 'expo-av';
-import { Audio } from 'expo-av';
+import { useVideoPlayer, VideoView } from 'expo-video';
+import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
 import * as Sharing from 'expo-sharing';
 import Header from '../components/header';
 import { useLocalSearchParams } from 'expo-router';
 
-const API_BASE = 'http://192.168.137.1:5000/api/home';
-const MEDIA_BASE = 'http://192.168.137.1:5000/';
+const API_BASE = 'http://10.100.67.248:5000/api/home';
+const MEDIA_BASE = 'http://10.100.67.248:5000/';
 
 const DEFAULT_CONTEXT_TYPES = ['Awareness', 'Guidance', 'Collaboration', 'Support'];
 const SCREEN_WIDTH = Dimensions.get('window').width;
@@ -93,6 +93,117 @@ type UserPostGroup = {
   posts: Post[];
 };
 
+// ─── Video component for posts ───
+const PostVideo = ({
+  uri,
+  isFullscreen,
+  onToggleFullscreen,
+}: {
+  uri: string;
+  isFullscreen: boolean;
+  onToggleFullscreen: () => void;
+}) => {
+  const player = useVideoPlayer(uri, (player) => {
+    player.loop = false;
+  });
+
+  const duration = player.duration || 0;
+  const minutes = Math.floor(duration / 60);
+  const seconds = Math.floor(duration % 60);
+
+  return (
+    <View style={styles.videoContainer}>
+      <VideoView
+        style={[styles.videoPlayer, isFullscreen && styles.fullscreenVideo]}
+        player={player}
+        allowsFullscreen
+        allowsPictureInPicture
+        nativeControls
+      />
+      <View style={styles.videoControls}>
+        <TouchableOpacity
+          style={styles.videoControlButton}
+          onPress={() => (player.playing ? player.pause() : player.play())}
+        >
+          <Ionicons
+            name={player.playing ? 'pause' : 'play'}
+            size={28}
+            color="#FFF"
+          />
+        </TouchableOpacity>
+        <Text style={styles.videoTime}>
+          {duration
+            ? `${minutes}:${seconds.toString().padStart(2, '0')}`
+            : '--:--'}
+        </Text>
+        <TouchableOpacity
+          style={styles.videoControlButton}
+          onPress={onToggleFullscreen}
+        >
+          <Ionicons
+            name={isFullscreen ? 'contract' : 'expand'}
+            size={24}
+            color="#FFF"
+          />
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+};
+
+// ─── Audio component for posts ───
+const PostAudio = ({
+  uri,
+  name,
+  isPlaying,
+  onToggle,
+}: {
+  uri: string;
+  name: string;
+  isPlaying: boolean;
+  onToggle: () => void;
+}) => {
+  const player = useAudioPlayer(uri);
+  const status = useAudioPlayerStatus(player);
+
+  useEffect(() => {
+    if (isPlaying) {
+      player.play();
+    } else {
+      player.pause();
+    }
+  }, [isPlaying, player]);
+
+  return (
+    <View style={styles.audioContainer}>
+      <TouchableOpacity style={styles.audioPlayButton} onPress={onToggle}>
+        <Ionicons
+          name={status.playing ? 'pause-circle' : 'play-circle'}
+          size={48}
+          color="#0A7A6E"
+        />
+      </TouchableOpacity>
+      <View style={styles.audioInfo}>
+        <Text style={styles.audioName}>{name}</Text>
+        <View style={styles.audioWave}>
+          {[...Array(12)].map((_, i) => (
+            <View
+              key={i}
+              style={[
+                styles.waveBar,
+                {
+                  height: 8 + Math.random() * 16,
+                  opacity: status.playing ? 0.8 : 0.3,
+                },
+              ]}
+            />
+          ))}
+        </View>
+      </View>
+    </View>
+  );
+};
+
 export default function Home() {
   const { width, height } = useWindowDimensions();
   const params = useLocalSearchParams<{ postId?: string }>();
@@ -131,10 +242,7 @@ export default function Home() {
   const [commentPosting, setCommentPosting] = useState(false);
   const commentEditor = useRef<RichEditor>(null);
 
-  const [videoStatus, setVideoStatus] = useState<{ [key: number]: any }>({});
   const [audioPlaying, setAudioPlaying] = useState<{ [key: number]: boolean }>({});
-  const videoRefs = useRef<{ [key: number]: any }>({});
-  const audioRefs = useRef<{ [key: number]: any }>({});
   const [isFullscreen, setIsFullscreen] = useState<{ [key: number]: boolean }>({});
 
   const richText = useRef<RichEditor>(null);
@@ -748,41 +856,21 @@ export default function Home() {
     }
   };
 
-  const toggleVideoPlay = async (postId: number) => {
-    const videoRef = videoRefs.current[postId];
-    if (!videoRef) return;
-    const status = videoStatus[postId];
-    if (status?.isPlaying) await videoRef.pauseAsync();
-    else await videoRef.playAsync();
-  };
-
   const toggleFullscreen = (postId: number) => {
     setIsFullscreen((prev) => ({ ...prev, [postId]: !prev[postId] }));
   };
 
-  const toggleAudioPlay = async (postId: number, audioUri: string) => {
+  const toggleAudioPlay = (postId: number) => {
     const isCurrentlyPlaying = audioPlaying[postId];
-    Object.keys(audioRefs.current).forEach(async (key) => {
-      if (parseInt(key, 10) !== postId && audioRefs.current[parseInt(key, 10)]) {
-        await audioRefs.current[parseInt(key, 10)].pauseAsync();
-        setAudioPlaying((prev) => ({ ...prev, [parseInt(key, 10)]: false }));
-      }
+    // Pause all other audio first
+    setAudioPlaying((prev) => {
+      const next: { [key: number]: boolean } = {};
+      Object.keys(prev).forEach((key) => {
+        next[parseInt(key, 10)] = false;
+      });
+      next[postId] = !isCurrentlyPlaying;
+      return next;
     });
-    if (isCurrentlyPlaying) {
-      await audioRefs.current[postId]?.pauseAsync();
-      setAudioPlaying((prev) => ({ ...prev, [postId]: false }));
-    } else {
-      try {
-        const { sound } = await Audio.Sound.createAsync(
-          { uri: audioUri },
-          { shouldPlay: true }
-        );
-        audioRefs.current[postId] = sound;
-        setAudioPlaying((prev) => ({ ...prev, [postId]: true }));
-      } catch (error) {
-        console.log('Audio play error:', error);
-      }
-    }
   };
 
   const openDocument = async (uri: string, name: string) => {
@@ -963,97 +1051,20 @@ export default function Home() {
             )}
 
             {post.media_type === 'video' && (
-              <View style={styles.videoContainer}>
-                <Video
-                  ref={(ref) => {
-                    videoRefs.current[post.id] = ref;
-                  }}
-                  source={{ uri: getMediaUrl(post.media_path)! }}
-                  style={[
-                    styles.videoPlayer,
-                    isFullscreen[post.id] && styles.fullscreenVideo,
-                  ]}
-                  resizeMode={ResizeMode.CONTAIN}
-                  shouldPlay={false}
-                  isLooping={false}
-                  onPlaybackStatusUpdate={(status) => {
-                    setVideoStatus((prev) => ({ ...prev, [post.id]: status }));
-                    if ((status as any).didJustFinish) {
-                      setVideoStatus((prev) => ({
-                        ...prev,
-                        [post.id]: { ...status, isPlaying: false },
-                      }));
-                    }
-                  }}
-                />
-                <View style={styles.videoControls}>
-                  <TouchableOpacity
-                    style={styles.videoControlButton}
-                    onPress={() => toggleVideoPlay(post.id)}
-                  >
-                    <Ionicons
-                      name={videoStatus[post.id]?.isPlaying ? 'pause' : 'play'}
-                      size={28}
-                      color="#FFF"
-                    />
-                  </TouchableOpacity>
-                  <Text style={styles.videoTime}>
-                    {videoStatus[post.id]?.durationMillis
-                      ? `${Math.floor(videoStatus[post.id].durationMillis / 60000)}:${Math.floor(
-                          (videoStatus[post.id].durationMillis % 60000) / 1000
-                        )
-                          .toString()
-                          .padStart(2, '0')}`
-                      : '--:--'}
-                  </Text>
-                  <TouchableOpacity
-                    style={styles.videoControlButton}
-                    onPress={() => toggleFullscreen(post.id)}
-                  >
-                    <Ionicons
-                      name={isFullscreen[post.id] ? 'contract' : 'expand'}
-                      size={24}
-                      color="#FFF"
-                    />
-                  </TouchableOpacity>
-                </View>
-              </View>
+              <PostVideo
+                uri={getMediaUrl(post.media_path)!}
+                isFullscreen={!!isFullscreen[post.id]}
+                onToggleFullscreen={() => toggleFullscreen(post.id)}
+              />
             )}
 
             {post.media_type === 'audio' && (
-              <View style={styles.audioContainer}>
-                <TouchableOpacity
-                  style={styles.audioPlayButton}
-                  onPress={() =>
-                    toggleAudioPlay(post.id, getMediaUrl(post.media_path)!)
-                  }
-                >
-                  <Ionicons
-                    name={audioPlaying[post.id] ? 'pause-circle' : 'play-circle'}
-                    size={48}
-                    color="#0A7A6E"
-                  />
-                </TouchableOpacity>
-                <View style={styles.audioInfo}>
-                  <Text style={styles.audioName}>
-                    {post.media_original_name || 'Audio file'}
-                  </Text>
-                  <View style={styles.audioWave}>
-                    {[...Array(12)].map((_, i) => (
-                      <View
-                        key={i}
-                        style={[
-                          styles.waveBar,
-                          {
-                            height: 8 + Math.random() * 16,
-                            opacity: audioPlaying[post.id] ? 0.8 : 0.3,
-                          },
-                        ]}
-                      />
-                    ))}
-                  </View>
-                </View>
-              </View>
+              <PostAudio
+                uri={getMediaUrl(post.media_path)!}
+                name={post.media_original_name || 'Audio file'}
+                isPlaying={!!audioPlaying[post.id]}
+                onToggle={() => toggleAudioPlay(post.id)}
+              />
             )}
 
             {(isPdf(post) ||

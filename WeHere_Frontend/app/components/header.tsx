@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { 
   View, 
   Text, 
@@ -6,16 +6,13 @@ import {
   StyleSheet, 
   SafeAreaView, 
   StatusBar,
-  Modal,
-  TouchableWithoutFeedback,
-  Animated,
   Dimensions
 } from 'react-native';
 import { useRouter, usePathname } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const API_BASE = 'http://192.168.9.146:5000/api/notifications';
+const API_BASE = 'http://10.100.67.248:5000/api/notifications';
 const { width, height } = Dimensions.get('window');
 
 export default function Header() {
@@ -26,9 +23,6 @@ export default function Header() {
   const [sosCount, setSosCount] = useState(0);
   const [userId, setUserId] = useState<number | null>(null);
   const [isOnline, setIsOnline] = useState(true);
-  const [dropdownVisible, setDropdownVisible] = useState(false);
-  const slideAnim = useRef(new Animated.Value(-100)).current;
-  const fadeAnim = useRef(new Animated.Value(0)).current;
 
   // Check if we're in donate app
   const isDonateApp = pathname?.startsWith('/(tabs_donate)');
@@ -103,53 +97,6 @@ export default function Header() {
     }
   };
 
-  const toggleDropdown = () => {
-    if (dropdownVisible) {
-      // Animate close
-      Animated.parallel([
-        Animated.timing(slideAnim, {
-          toValue: -100,
-          duration: 200,
-          useNativeDriver: true,
-        }),
-        Animated.timing(fadeAnim, {
-          toValue: 0,
-          duration: 200,
-          useNativeDriver: true,
-        })
-      ]).start(() => {
-        setDropdownVisible(false);
-      });
-    } else {
-      setDropdownVisible(true);
-      // Animate open
-      Animated.parallel([
-        Animated.timing(slideAnim, {
-          toValue: 0,
-          duration: 250,
-          useNativeDriver: true,
-        }),
-        Animated.timing(fadeAnim, {
-          toValue: 1,
-          duration: 250,
-          useNativeDriver: true,
-        })
-      ]).start();
-    }
-  };
-
-  const handleWeDonate = () => {
-    toggleDropdown();
-    // Navigate to the donate tabs
-    router.push('/(tabs_donate)');
-  };
-
-  const handleWeCollab = () => {
-    toggleDropdown();
-    // Navigate to the main tabs (WeCollab)
-    router.push('/(tabs)');
-  };
-
   const totalNotifications = ambulanceCount + sosCount;
 
   return (
@@ -157,24 +104,9 @@ export default function Header() {
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
       <View style={styles.header}>
         <View style={styles.logoWrapper}>
-          <TouchableOpacity
-            style={styles.logoContainer}
-            onPress={toggleDropdown}
-            activeOpacity={0.7}
-          >
+          <View style={styles.logoContainer}>
             <Text style={styles.logoText}>WeHere</Text>
-            {/* Show app badge based on current route */}
-            {isDonateApp && (
-              <View style={styles.appBadge}>
-                <Text style={styles.appBadgeText}>Donate</Text>
-              </View>
-            )}
-            <MaterialIcons 
-              name={dropdownVisible ? "arrow-drop-up" : "arrow-drop-down"} 
-              size={24} 
-              color="#2e7d32" 
-            />
-          </TouchableOpacity>
+          </View>
         </View>
 
         <View style={styles.statusContainer}>
@@ -211,66 +143,6 @@ export default function Header() {
           </TouchableOpacity>
         </View>
       </View>
-
-      {/* Dropdown Modal - positioned below WeHere */}
-      <Modal
-        transparent={true}
-        visible={dropdownVisible}
-        animationType="none"
-        onRequestClose={toggleDropdown}
-      >
-        <TouchableWithoutFeedback onPress={toggleDropdown}>
-          <View style={styles.dropdownOverlay}>
-            <TouchableWithoutFeedback>
-              <Animated.View 
-                style={[
-                  styles.dropdownContainer,
-                  {
-                    opacity: fadeAnim,
-                    transform: [{ translateY: slideAnim }],
-                  }
-                ]}
-              >
-                <View style={styles.dropdownArrow} />
-                
-                <TouchableOpacity 
-                  style={[styles.dropdownItem, isDonateApp && styles.dropdownItemActive]} 
-                  onPress={handleWeDonate}
-                  activeOpacity={0.7}
-                >
-                  <Text style={[styles.dropdownItemText, isDonateApp && styles.dropdownItemTextActive]}>
-                    WeDonate
-                  </Text>
-                  {isDonateApp && (
-                    <View style={styles.activeIndicator}>
-                      <Text style={styles.activeIndicatorText}>Active</Text>
-                    </View>
-                  )}
-                  <MaterialIcons name="chevron-right" size={20} color={isDonateApp ? "#dc2626" : "#999"} />
-                </TouchableOpacity>
-                
-                <View style={styles.dropdownDivider} />
-                
-                <TouchableOpacity 
-                  style={[styles.dropdownItem, !isDonateApp && styles.dropdownItemActive]} 
-                  onPress={handleWeCollab}
-                  activeOpacity={0.7}
-                >
-                  <Text style={[styles.dropdownItemText, !isDonateApp && styles.dropdownItemTextActive]}>
-                    WeCollab
-                  </Text>
-                  {!isDonateApp && (
-                    <View style={styles.activeIndicator}>
-                      <Text style={styles.activeIndicatorText}>Active</Text>
-                    </View>
-                  )}
-                  <MaterialIcons name="chevron-right" size={20} color={!isDonateApp ? "#2e7d32" : "#999"} />
-                </TouchableOpacity>
-              </Animated.View>
-            </TouchableWithoutFeedback>
-          </View>
-        </TouchableWithoutFeedback>
-      </Modal>
     </SafeAreaView>
   );
 }
@@ -396,81 +268,5 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     color: '#FFFFFF',
-  },
-  // Dropdown Styles
-  dropdownOverlay: {
-    flex: 1,
-    backgroundColor: 'transparent',
-  },
-  dropdownContainer: {
-    position: 'absolute',
-    top: 60,
-    left: 20,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    paddingVertical: 8,
-    paddingHorizontal: 4,
-    minWidth: 200,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 8,
-    borderWidth: 1,
-    borderColor: '#f0f0f0',
-  },
-  dropdownArrow: {
-    position: 'absolute',
-    top: -8,
-    left: 20,
-    width: 0,
-    height: 0,
-    backgroundColor: 'transparent',
-    borderStyle: 'solid',
-    borderLeftWidth: 8,
-    borderRightWidth: 8,
-    borderBottomWidth: 8,
-    borderLeftColor: 'transparent',
-    borderRightColor: 'transparent',
-    borderBottomColor: '#FFFFFF',
-  },
-  dropdownItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-  },
-  dropdownItemActive: {
-    backgroundColor: '#f0fdf4',
-  },
-  dropdownItemText: {
-    flex: 1,
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1a1a1a',
-  },
-  dropdownItemTextActive: {
-    color: '#2e7d32',
-  },
-  dropdownDivider: {
-    height: 1,
-    backgroundColor: '#f0f0f0',
-    marginHorizontal: 16,
-  },
-  activeIndicator: {
-    backgroundColor: '#dcfce7',
-    paddingHorizontal: 10,
-    paddingVertical: 3,
-    borderRadius: 10,
-    marginRight: 8,
-  },
-  activeIndicatorText: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: '#2e7d32',
   },
 });

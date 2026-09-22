@@ -7,11 +7,11 @@ import {
   RefreshControl,
   ActivityIndicator,
 } from 'react-native';
-import { Video, ResizeMode } from 'expo-av';
+import { useVideoPlayer, VideoView } from 'expo-video';
 import { MaterialIcons } from '@expo/vector-icons';
 import { getSocket } from '../../../lib/socket';
 
-const API_BASE_URL = 'http://192.168.137.1:5000/api/sos';
+const API_BASE_URL = 'http://10.100.67.248:5000/api/sos';
 
 interface SosClip {
   id: number;
@@ -27,6 +27,21 @@ interface SosClip {
 export interface ClipFeedHandle {
   refresh: () => void;
 }
+
+const ClipVideo = ({ uri }: { uri: string }) => {
+  const player = useVideoPlayer(uri, (player) => {
+    player.loop = false;
+  });
+
+  return (
+    <VideoView
+      style={styles.video}
+      player={player}
+      allowsFullscreen
+      allowsPictureInPicture
+    />
+  );
+};
 
 export default function ClipFeed() {
   const [clips, setClips] = useState<SosClip[]>([]);
@@ -101,13 +116,7 @@ export default function ClipFeed() {
       renderItem={({ item }) => (
         <View style={styles.card}>
           {/* Video */}
-          <Video
-            source={{ uri: item.gatewayUrl }}
-            style={styles.video}
-            useNativeControls
-            resizeMode={ResizeMode.COVER}
-            isLooping={false}
-          />
+          <ClipVideo uri={item.gatewayUrl} />
 
           {/* Meta info */}
           <View style={styles.meta}>

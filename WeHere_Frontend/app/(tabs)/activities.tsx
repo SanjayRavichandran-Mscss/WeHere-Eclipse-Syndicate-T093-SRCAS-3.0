@@ -13,11 +13,11 @@ import {
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Bell, CheckCircle, Clock3, Film, Heart, MessageCircle, UserPlus, XCircle } from 'lucide-react-native';
-import { Video as ExpoVideo, ResizeMode } from 'expo-av';
+import { useVideoPlayer, VideoView } from 'expo-video';
 import Header from '../components/header';
 
-const API_BASE = 'http://192.168.9.146:5000/api';
-const SERVER_BASE = 'http://192.168.9.146:5000';
+const API_BASE = 'http://10.100.67.248:5000/api';
+const SERVER_BASE = 'http://10.100.67.248:5000';
 
 type Comment = {
   id?: string | number;
@@ -53,6 +53,7 @@ type RequestItem = {
   requester_location?: string | null;
   created_at: string;
   status: 'pending' | 'accepted' | 'declined';
+  updated_at?: string;
 };
 
 type SosClip = {
@@ -123,6 +124,21 @@ async function getStoredUserId(): Promise<number | null> {
   }
   return null;
 }
+
+const VideoClip = ({ uri }: { uri: string }) => {
+  const player = useVideoPlayer(uri, (player) => {
+    player.loop = false;
+  });
+
+  return (
+    <VideoView
+      style={styles.clipVideo}
+      player={player}
+      allowsFullscreen
+      allowsPictureInPicture
+    />
+  );
+};
 
 export default function Activities() {
   const [data, setData] = useState<ActivityData>(emptyData);
@@ -264,21 +280,26 @@ export default function Activities() {
         )}
 
         {post.comments.length > 0 && (
-          <View style={styles.commentsBox}>
-            <Text style={styles.commentsTitle}>Comments</Text>
+          <View style={styles.commentsInline}>
             {post.comments.slice(-3).map((comment, index) => (
               <View key={String(comment.id ?? `${post.id}-${index}`)} style={styles.commentRow}>
-                <View style={styles.smallAvatar}><Text style={styles.smallAvatarText}>{(comment.author_name || 'U').charAt(0).toUpperCase()}</Text></View>
+                <View style={styles.smallAvatar}>
+                  <Text style={styles.smallAvatarText}>
+                    {(comment.author_name || 'U').charAt(0).toUpperCase()}
+                  </Text>
+                </View>
                 <View style={styles.commentBody}>
-                  <View style={styles.commentTop}>
-                    <Text style={styles.commentAuthor}>{comment.author_name || 'Unknown user'}</Text>
-                    <Text style={styles.commentTime}>{timeAgo(comment.created_at)}</Text>
-                  </View>
-                  <Text style={styles.commentText}>{comment.content || 'Comment'}</Text>
+                  <Text style={styles.commentLine} numberOfLines={2}>
+                    <Text style={styles.commentAuthor}>{comment.author_name || 'Unknown user'} </Text>
+                    {comment.content || 'Comment'}
+                  </Text>
+                  <Text style={styles.commentTime}>{timeAgo(comment.created_at)}</Text>
                 </View>
               </View>
             ))}
-            {post.comment_count > 3 && <Text style={styles.moreComments}>+ {post.comment_count - 3} more comments</Text>}
+            {post.comment_count > 3 && (
+              <Text style={styles.moreComments}>+ {post.comment_count - 3} more comments</Text>
+            )}
           </View>
         )}
       </View>
@@ -355,7 +376,6 @@ export default function Activities() {
     </View>
   );
 
-
   return (
     <SafeAreaView style={styles.safeArea}>
       <Header />
@@ -396,11 +416,27 @@ export default function Activities() {
           <View style={styles.loading}><ActivityIndicator size="large" color="#14532D" /><Text style={styles.loadingText}>Loading activities...</Text></View>
         ) : selectedTab === 'overview' ? (
           <>
-            <View style={styles.statsGrid}>
-              <View style={styles.statCard}><Text style={styles.statIcon}>📝</Text><Text style={styles.statValue}>{data.stats.posts}</Text><Text style={styles.statLabel}>Posts</Text></View>
-              <View style={styles.statCard}><Text style={styles.statIcon}>❤️</Text><Text style={styles.statValue}>{data.stats.likes}</Text><Text style={styles.statLabel}>Likes</Text></View>
-              <View style={styles.statCard}><Text style={styles.statIcon}>💬</Text><Text style={styles.statValue}>{data.stats.comments}</Text><Text style={styles.statLabel}>Comments</Text></View>
-              <View style={styles.statCard}><Text style={styles.statIcon}>🔔</Text><Text style={styles.statValue}>{data.stats.requests}</Text><Text style={styles.statLabel}>Requests</Text></View>
+            {/* Compact single-row stats: count + label only, no boxed cards */}
+            <View style={styles.statsRow}>
+              <View style={styles.statItem}>
+                <Text style={styles.statValue}>{data.stats.posts}</Text>
+                <Text style={styles.statLabel}>Posts</Text>
+              </View>
+              <View style={styles.statDivider} />
+              <View style={styles.statItem}>
+                <Text style={styles.statValue}>{data.stats.likes}</Text>
+                <Text style={styles.statLabel}>Likes</Text>
+              </View>
+              <View style={styles.statDivider} />
+              <View style={styles.statItem}>
+                <Text style={styles.statValue}>{data.stats.comments}</Text>
+                <Text style={styles.statLabel}>Comments</Text>
+              </View>
+              <View style={styles.statDivider} />
+              <View style={styles.statItem}>
+                <Text style={styles.statValue}>{data.stats.requests}</Text>
+                <Text style={styles.statLabel}>Requests</Text>
+              </View>
             </View>
 
             <View style={styles.sectionHeader}><Text style={styles.sectionTitle}>My Posts</Text><Text style={styles.sectionCount}>{data.stats.posts}</Text></View>
@@ -481,13 +517,7 @@ export default function Activities() {
             ) : sosClips.length ? (
               sosClips.map((clip) => (
                 <View key={clip.id} style={styles.clipCard}>
-                  <ExpoVideo
-                    source={{ uri: clip.gatewayUrl }}
-                    style={styles.clipVideo}
-                    useNativeControls
-                    resizeMode={ResizeMode.COVER}
-                    isLooping={false}
-                  />
+                  <VideoClip uri={clip.gatewayUrl} />
                   <View style={styles.clipMeta}>
                     <View style={styles.clipUserRow}>
                       <View style={styles.clipAvatar}>
@@ -552,11 +582,31 @@ const styles = StyleSheet.create({
   clipLocation: { fontSize: 12, color: '#4B5563', marginTop: 9 },
   clipIpfs: { fontSize: 10, color: '#9CA3AF', marginTop: 6 },
   loadingText: { marginTop: 10, color: '#6B7280' },
-  statsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 24 },
-  statCard: { width: '48.5%', backgroundColor: '#fff', borderRadius: 14, padding: 16, borderWidth: 1, borderColor: '#E5E7EB' },
-  statIcon: { fontSize: 23, marginBottom: 7 },
-  statValue: { fontSize: 25, fontWeight: '800', color: '#111827' },
-  statLabel: { color: '#6B7280', marginTop: 2, fontSize: 13 },
+
+  /* --- Compact single-row stats (replaces the old boxed statsGrid) --- */
+  statsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    paddingVertical: 14,
+    marginBottom: 22,
+  },
+  statItem: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  statDivider: {
+    width: 1,
+    height: 28,
+    backgroundColor: '#E5E7EB',
+  },
+  statValue: { fontSize: 19, fontWeight: '800', color: '#111827' },
+  statLabel: { color: '#6B7280', marginTop: 3, fontSize: 11, fontWeight: '600', letterSpacing: 0.2 },
+
   sectionHeader: { flexDirection: 'row', alignItems: 'center', marginTop: 6, marginBottom: 10 },
   sectionTitle: { flex: 1, fontSize: 19, fontWeight: '800', color: '#111827' },
   sectionCount: { minWidth: 26, height: 26, borderRadius: 13, backgroundColor: '#E8F3EA', color: '#14532D', textAlign: 'center', textAlignVertical: 'center', paddingTop: 4, fontWeight: '800', overflow: 'hidden' },
@@ -622,4 +672,6 @@ const styles = StyleSheet.create({
   acceptButton: { backgroundColor: '#15803D' },
   declineButton: { backgroundColor: '#DC2626' },
   actionText: { color: '#fff', fontWeight: '700', fontSize: 12 },
+  commentsInline: { marginTop: 10, gap: 6 },
+  commentLine: { color: '#4B5563', fontSize: 12, lineHeight: 17 },
 });
