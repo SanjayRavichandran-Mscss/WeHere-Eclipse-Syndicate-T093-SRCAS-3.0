@@ -10,10 +10,14 @@
 // const offlineRoutes = require('./routes/offlineRoutes');
 // const feedRoutes = require('./routes/feedRoutes');
 // const homeRoutes = require('./routes/homeRoutes');
+// const networksRoutes = require('./routes/networksRoutes');
 
 // const ambulanceAlertRoutes = require('./routes/ambulanceAlertRoutes');
 // const notificationRoutes = require('./routes/notificationRoutes');
 // const sosController = require('./controllers/sosController');
+// const activitiesRoutes = require('./routes/activitiesRoutes');
+// const supportRoutes = require('./routes/supportRoutes');
+
 
 // const app = express();
 // const server = http.createServer(app);
@@ -80,14 +84,26 @@
 //   })
 // );
 
+// // ────────────────────────────────────────────────
+// //             SERVE STATIC FILES
+// // ────────────────────────────────────────────────
+// // This line allows access to files in the uploads folder
+// // Example: http://localhost:5000/uploads/posts/image.jpg
+// app.use('/uploads', express.static('uploads'));
+
+// // ────────────────────────────────────────────────
+// //                  ROUTES
+// // ────────────────────────────────────────────────
 // app.use('/api/auth', authRoutes);
 // app.use('/api/sos', sosRoutes);
 // app.use('/api/ambulance-alerts', ambulanceAlertRoutes);
 // app.use('/api/notifications', notificationRoutes);
 // app.use('/api/offline', offlineRoutes);
 // app.use('/api/feed', feedRoutes);
-// app.use('/api/home',homeRoutes);
-
+// app.use('/api/home', homeRoutes);
+// app.use('/api/networks', networksRoutes);
+// app.use('/api/activities', activitiesRoutes);
+// app.use('/api/support', supportRoutes);
 
 // // ── Test endpoint to check server status ──
 // app.get('/api/test', (req, res) => {
@@ -128,7 +144,7 @@
 //   }, 5000);
 //   console.log('[Broadcast Sync] Location poller started (every 5s)');
 
-//   app.listen(PORT, '0.0.0.0', () => {
+//   server.listen(PORT, '0.0.0.0', () => {
 //     // Build the table
 //     const rows = [];
     
@@ -146,7 +162,7 @@
 //       rows.push(['Expo Go', `http://${allIps[0].address}:${PORT}`]);
 //     }
 
-//     const title = '🚀 WeHere Backend Running on Port ' + PORT;
+//     const title = 'WeHere Backend Running on Port ' + PORT;
 //     const labelWidth = Math.max(...rows.map((r) => r[0].length)) + 2;
 //     const valueWidth = Math.max(...rows.map((r) => r[1].length), title.length) + 2;
 //     const totalWidth = labelWidth + valueWidth + 3;
@@ -164,12 +180,25 @@
 //     });
 
 //     console.log('╚' + '═'.repeat(labelWidth + 1) + '╩' + '═'.repeat(valueWidth + 1) + '╝');
-
-
 //   });
 // };
 
 // startServer();
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -202,11 +231,14 @@ const notificationRoutes = require('./routes/notificationRoutes');
 const sosController = require('./controllers/sosController');
 const activitiesRoutes = require('./routes/activitiesRoutes');
 const supportRoutes = require('./routes/supportRoutes');
+const expertRoutes = require('./routes/expertRoutes');
 
 
 const app = express();
 const server = http.createServer(app);
-const PORT = 5000;
+
+// ⬇⬇⬇ THE FIX: read PORT from environment (Render assigns it), fallback to 5000 for local
+const PORT = process.env.PORT || 5000;
 
 app.use(express.json());
 
@@ -289,6 +321,8 @@ app.use('/api/home', homeRoutes);
 app.use('/api/networks', networksRoutes);
 app.use('/api/activities', activitiesRoutes);
 app.use('/api/support', supportRoutes);
+app.use('/api/expert', expertRoutes);
+
 
 // ── Test endpoint to check server status ──
 app.get('/api/test', (req, res) => {
@@ -329,6 +363,7 @@ const startServer = async () => {
   }, 5000);
   console.log('[Broadcast Sync] Location poller started (every 5s)');
 
+  // ⬇⬇⬇ THE FIX: bind to 0.0.0.0 so Render can detect the port
   server.listen(PORT, '0.0.0.0', () => {
     // Build the table
     const rows = [];
